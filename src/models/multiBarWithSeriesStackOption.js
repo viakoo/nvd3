@@ -277,20 +277,15 @@ nv.models.multiBarWithSeriesStackOption = function() {
                         } else {
                             return Math.max(Math.abs(y(getY(d,i)) - y(0)),1) || 0;
                         }
-                        // return Math.max(Math.abs(y(d.y + ( ? d.y0 : 0)) - y((stacked && data[d.idx].stacked ? d.y0 : 0))),1);
                     })
                     .attr('x', function(d,i,j) {
-                        if (stacked && data[j].stacked) {
-                            return 0;
-                        } else {
-                            return d.series * x.rangeBand() / data.length
-                        }
+                        return 0;
                     })
                     .attr('width', function(d,i,j){
                         if (stacked && data[j].stacked) {
-                            return x.rangeBand()/1;
+                            return x.rangeBand();
                         } else {
-                            return x.rangeBand() / data.length
+                            return data.length > 1 ? x.rangeBand()/2: x.rangeBand();
                         }
                     });
             else

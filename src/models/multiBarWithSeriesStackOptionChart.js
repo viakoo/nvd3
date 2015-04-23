@@ -49,7 +49,6 @@ nv.models.multiBarWithSeriesStackOptionChart = function() {
     xAxis
         .orient('bottom')
         .tickPadding(7)
-        .highlightZero(true)
         .showMaxMin(false)
         .tickFormat(function(d) { return d })
     ;
@@ -165,8 +164,8 @@ nv.models.multiBarWithSeriesStackOptionChart = function() {
             y = multibar.yScale();
 
             // Setup containers and skeleton of chart
-            var wrap = container.selectAll('g.nv-wrap.nv-multiBarWithLegend').data([data]);
-            var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-multiBarWithLegend').append('g');
+            var wrap = container.selectAll('g.nv-wrap.nv-multiBarWithSeriesStackOption').data([data]);
+            var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-multiBarWithSeriesStackOption').append('g');
             var g = wrap.select('g');
 
             gEnter.append('g').attr('class', 'nv-x nv-axis');

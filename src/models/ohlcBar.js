@@ -28,7 +28,7 @@ nv.models.ohlcBar = function() {
         , yDomain
         , xRange
         , yRange
-        , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'stateChange', 'changeState', 'renderEnd', 'chartClick', 'elementClick', 'elementDblClick', 'elementMouseover', 'elementMouseout')
+        , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'stateChange', 'changeState', 'renderEnd', 'chartClick', 'elementClick', 'elementDblClick', 'elementMouseover', 'elementMouseout', 'elementMousemove')
         ;
 
     //============================================================
@@ -38,12 +38,13 @@ nv.models.ohlcBar = function() {
     function chart(selection) {
         selection.each(function(data) {
             var container = d3.select(this);
-            var availableWidth = (width  || parseInt(container.style('width')) || 960)
-                - margin.left - margin.right;
-            var availableHeight = (height || parseInt(container.style('height')) || 400)
-                - margin.top - margin.bottom;
+            var availableWidth = nv.utils.availableWidth(width, container, margin),
+                availableHeight = nv.utils.availableHeight(height, container, margin);
 
             nv.utils.initSVG(container);
+
+            // ohlc bar width.
+            var w = (availableWidth / data[0].values.length) * .9;
 
             // Setup Scales
             x.domain(xDomain || d3.extent(data[0].values.map(getX).concat(forceX) ));
@@ -51,7 +52,7 @@ nv.models.ohlcBar = function() {
             if (padData)
                 x.range(xRange || [availableWidth * .5 / data[0].values.length, availableWidth * (data[0].values.length - .5)  / data[0].values.length ]);
             else
-                x.range(xRange || [0, availableWidth]);
+                x.range(xRange || [5 + w/2, availableWidth - w/2 - 5]);
 
             y.domain(yDomain || [
                     d3.min(data[0].values.map(getLow).concat(forceY)),
@@ -105,10 +106,9 @@ nv.models.ohlcBar = function() {
                 .data(function(d) { return d });
             ticks.exit().remove();
 
-            var ticksEnter = ticks.enter().append('path')
+            ticks.enter().append('path')
                 .attr('class', function(d,i,j) { return (getOpen(d,i) > getClose(d,i) ? 'nv-tick negative' : 'nv-tick positive') + ' nv-tick-' + j + '-' + i })
                 .attr('d', function(d,i) {
-                    var w = (availableWidth / data[0].values.length) * .9;
                     return 'm0,0l0,'
                         + (y(getOpen(d,i))
                             - y(getHigh(d,i)))

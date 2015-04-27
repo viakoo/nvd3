@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-04-22 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-04-27 */
 (function(){
 
 // set up main nv object
@@ -7666,6 +7666,14 @@ nv.models.multiBar = function() {
                 });
                 data = parsed;
             }
+            //add series index and key to each data point for reference
+            data.forEach(function(series, i) {
+                series.values.forEach(function(point) {
+                    point.series = i;
+                    point.key = series.key;
+                });
+            });
+
             // HACK for negative value stacking
             if (stacked)
                 data[0].values.map(function(d,i) {
@@ -7831,17 +7839,36 @@ nv.models.multiBar = function() {
                     });
             if (stacked){
                 barSelection
-                    .attr('y', function(d,i) {
-                        return y(d.y1);
+                    .attr('y', function(d,i,j) {
+                        if (stacked && !data[j].nonStackable) {
+                            return y(d.y1);
+                        } else {
+                            return getY(d,i) < 0 ?
+                                y(0) :
+                                    y(0) - y(getY(d,i)) < 1 ?
+                                y(0) - 1 :
+                                y(getY(d,i)) || 0;
+                        }
                     })
-                    .attr('height', function(d,i) {
-                        return Math.max(Math.abs(y(d.y + d.y0) - y(d.y0)),1);
+                    .attr('height', function(d,i,j) {
+                        if (stacked && !data[j].nonStackable) {
+                            return Math.max(Math.abs(y(d.y+d.y0) - y(d.y0)), 1);
+                        } else {
+                            return Math.max(Math.abs(y(getY(d,i)) - y(0)),1) || 0;
+                        }
                     })
-                    .attr('x', function(d,i) {
+                    .attr('x', function(d,i,j) {
                         return 0;
                     })
-                    .attr('width', x.rangeBand());
-            else
+                    .attr('width', function(d,i,j){
+                        if (stacked && !data[j].nonStackable) {
+                            return x.rangeBand();
+                        } else {
+                            return data.length > 1 ? x.rangeBand()/2: x.rangeBand();
+                        }
+                    });
+            }
+            else {
                 barSelection
                     .attr('x', function(d,i) {
                         return d.series * x.rangeBand() / data.length

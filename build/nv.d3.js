@@ -7668,7 +7668,6 @@ nv.models.multiBar = function() {
                                 d.y0 -= parsed[i - 1].values[j].y;
                                 d.y1 = d.y0 + d.y;
                             });
-                            console.log(parsed[i]);
                         }
                     }
                 });

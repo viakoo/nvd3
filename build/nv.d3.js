@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-04-27 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-04-29 */
 (function(){
 
 // set up main nv object
@@ -7662,6 +7662,14 @@ nv.models.multiBar = function() {
                     // if series is non-stackable, use un-parsed data
                     if (series.nonStackable) {
                         parsed[i] = data[i];
+                    } else {
+                        if (i > 0 && parsed[i - 1].nonStackable){
+                            parsed[i].values.map(function(d,j){
+                                d.y0 -= parsed[i - 1].values[j].y;
+                                d.y1 = d.y0 + d.y;
+                            });
+                            console.log(parsed[i]);
+                        }
                     }
                 });
                 data = parsed;
@@ -7840,15 +7848,21 @@ nv.models.multiBar = function() {
             if (stacked){
                 barSelection
                     .attr('y', function(d,i,j) {
+                        var yVal = 0;
                         if (stacked && !data[j].nonStackable) {
-                            return y(d.y1);
+                            yVal = y(getY(d,i));
                         } else {
-                            return getY(d,i) < 0 ?
-                                y(0) :
-                                    y(0) - y(getY(d,i)) < 1 ?
-                                y(0) - 1 :
-                                y(getY(d,i)) || 0;
+                            if (getY(d,i) < 0){
+                                yVal = y(0);
+                            } else {
+                                if (y(0) - y(getY(d,i)) < -1){
+                                    yVal = y(0) - 1;
+                                } else {
+                                    yVal = y(getY(d, i)) || 0;
+                                }
+                            }
                         }
+                        return yVal;
                     })
                     .attr('height', function(d,i,j) {
                         if (stacked && !data[j].nonStackable) {

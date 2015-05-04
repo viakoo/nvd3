@@ -157,6 +157,15 @@ nv.models.discreteBar = function() {
 
                 bars.select('text')
                     .text(function(d,i) { return valueFormat(getY(d,i)) })
+                    .style('font-size', function(d,i) { 
+                        var barWidth = x.rangeBand() / data.length;
+                        var barText =  valueFormat(getY(d,i));
+                        var textSize = barWidth/barText.length + 3;
+                        if (textSize < 8) {
+                            textSize = 8;
+                        }
+                        return textSize + 'px';
+                    })
                     .watchTransition(renderWatch, 'discreteBar: bars text')
                     .attr('x', x.rangeBand() * .9 / 2)
                     .attr('y', function(d,i) { return getY(d,i) < 0 ? y(getY(d,i)) - y(0) + 12 : -4 })

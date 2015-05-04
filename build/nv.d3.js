@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-04-29 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-05-04 */
 (function(){
 
 // set up main nv object
@@ -3959,6 +3959,15 @@ nv.models.discreteBar = function() {
 
                 bars.select('text')
                     .text(function(d,i) { return valueFormat(getY(d,i)) })
+                    .style('font-size', function(d,i) { 
+                        var barWidth = x.rangeBand() / data.length;
+                        var barText =  valueFormat(getY(d,i));
+                        var textSize = barWidth/barText.length + 3;
+                        if (textSize < 8) {
+                            textSize = 8;
+                        }
+                        return textSize + 'px';
+                    })
                     .watchTransition(renderWatch, 'discreteBar: bars text')
                     .attr('x', x.rangeBand() * .9 / 2)
                     .attr('y', function(d,i) { return getY(d,i) < 0 ? y(getY(d,i)) - y(0) + 12 : -4 })
@@ -7632,7 +7641,7 @@ nv.models.multiBar = function() {
                 availableHeight = height - margin.top - margin.bottom,
                 container = d3.select(this);
             nv.utils.initSVG(container);
-
+            var nonStackableCount = 0;
             // This function defines the requirements for render complete
             var endFn = function(d, i) {
                 if (d.series === data.length - 1 && i === data[0].values.length - 1)
@@ -7661,6 +7670,7 @@ nv.models.multiBar = function() {
                 parsed.forEach(function(series, i){
                     // if series is non-stackable, use un-parsed data
                     if (series.nonStackable) {
+                        data[i].nonStackableSeries = nonStackableCount++; 
                         parsed[i] = data[i];
                     } else {
                         // don't stack this seires on top of the nonStackable seriees 
@@ -7770,7 +7780,15 @@ nv.models.multiBar = function() {
 
             var exitTransition = renderWatch
                 .transition(groups.exit().selectAll('rect.nv-bar'), 'multibarExit', Math.min(100, duration))
-                .attr('y', function(d) { return (stacked ? y0(d.y0) : y0(0)) || 0 })
+                .attr('y', function(d, i, j) {
+                    var yVal = y0(0) || 0;
+                    if (stacked) {
+                        if (!data[d.series].nonStackable) {
+                            yVal = y0(d.y0);
+                        }
+                    }
+                    return yVal;
+                })
                 .attr('height', 0)
                 .remove();
             if (exitTransition.delay)
@@ -7863,6 +7881,7 @@ nv.models.multiBar = function() {
                 barSelection
                     .attr('y', function(d,i,j) {
                         var yVal = 0;
+                        // if stackable, stack it on top of the previous series
                         if (!data[j].nonStackable) {
                             yVal = y(d.y1);
                         } else {
@@ -7886,20 +7905,34 @@ nv.models.multiBar = function() {
                         }
                     })
                     .attr('x', function(d,i,j) {
-                        return 0;
+                        var width = 0;
+                        if (data[j].nonStackable) {
+                            width = d.series * x.rangeBand() / data.length;
+                            if (data.length !== nonStackableCount){
+                                width = data[j].nonStackableSeries * x.rangeBand()/(nonStackableCount*2); 
+                            }
+                        }
+                        return width;
                     })
                     .attr('width', function(d,i,j){
                         if (!data[j].nonStackable) {
                             return x.rangeBand();
                         } else {
-                            return data.length > 1 ? x.rangeBand()/2: x.rangeBand();
+                            // if all series are nonStacable, take the full width
+                            var width = (x.rangeBand() / nonStackableCount);
+                            // otherwise, nonStackable graph will be only taking the half-width 
+                            // of the x rangeBand
+                            if (data.length !== nonStackableCount) {
+                                width = x.rangeBand()/(nonStackableCount*2);
+                            }
+                            return width;
                         }
                     });
             }
             else {
                 barSelection
                     .attr('x', function(d,i) {
-                        return d.series * x.rangeBand() / data.length
+                        return d.series * x.rangeBand() / data.length;
                     })
                     .attr('width', x.rangeBand() / data.length)
                     .attr('y', function(d,i) {
@@ -7982,7 +8015,6 @@ nv.models.multiBar = function() {
 
     return chart;
 };
-
 nv.models.multiBarChart = function() {
     "use strict";
 

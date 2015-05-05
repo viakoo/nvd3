@@ -163,6 +163,8 @@ nv.models.discreteBar = function() {
                         var textSize = barWidth/barText.length + 3;
                         if (textSize < 8) {
                             textSize = 8;
+                        } else if (textSize > 14) {
+                            textSize = 14;
                         }
                         return textSize + 'px';
                     })

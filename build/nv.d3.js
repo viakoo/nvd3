@@ -3965,6 +3965,8 @@ nv.models.discreteBar = function() {
                         var textSize = barWidth/barText.length + 3;
                         if (textSize < 8) {
                             textSize = 8;
+                        } else if (textSize > 14) {
+                            textSize = 14;
                         }
                         return textSize + 'px';
                     })
@@ -4190,12 +4192,40 @@ nv.models.discreteBarChart = function() {
                     .scale(x)
                     ._ticks( nv.utils.calcTicksX(availableWidth/100, data) )
                     .tickSize(-availableHeight, 0);
-
+                var wrap = function(text, width) {
+                  width = width + margin.bottom;  
+                  text.each(function() {
+                    var text = d3.select(this);
+                    var fontSize = Number(text.style('font-size').replace('px', ''));
+                    var contentLength = this.textContent.length;
+                    // debugger;
+                    if (fontSize * contentLength > width) {
+                        text.text(this.textContent.substr(0, width/fontSize) + '...');   
+                    } else {
+                        text.text(this.textContent);
+                    }
+                  });
+                }
                 g.select('.nv-x.nv-axis')
                     .attr('transform', 'translate(0,' + (y.range()[0] + ((discretebar.showValues() && y.domain()[0] < 0) ? 16 : 0)) + ')');
                 g.select('.nv-x.nv-axis').call(xAxis);
 
                 var xTicks = g.select('.nv-x.nv-axis').selectAll('g');
+                g.selectAll('.tick text')
+                    .style('font-size', function(d,i){
+                        var width = x.rangeBand();
+                        var textLength = d.length;
+
+                        var textSize = width/textLength.length + 3;
+                        if (textSize < 8) {
+                            textSize = 8;
+                        } else if (textSize > 14) {
+                            textSize = 14;
+                        }
+                        return textSize + 'px';
+                    })
+                    .call(wrap, x.rangeBand());
+
                 if (staggerLabels) {
                     xTicks
                         .selectAll('text')

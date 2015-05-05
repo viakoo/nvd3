@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-05-04 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-05-05 */
 (function(){
 
 // set up main nv object
@@ -7813,7 +7813,7 @@ nv.models.multiBar = function() {
                 .attr('y', function(d, i, j) {
                     var yVal = y0(0) || 0;
                     if (stacked) {
-                        if (!data[d.series].nonStackable) {
+                        if (data[d.series] && !data[d.series].nonStackable) {
                             yVal = y0(d.y0);
                         }
                     }
